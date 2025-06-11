@@ -108,6 +108,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { getRouterApi } from "@/api/login.js";
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
+import { useUserStore } from '@/stores/user'
 import {
   UserFilled,
   SwitchButton,
@@ -122,11 +123,8 @@ import {
 const router = useRouter();
 const menuTree = ref([])
 
-// 用户数据
-const userData = reactive({
-  nickName: '',
-  avatar: ''
-})
+// ② 调用 userStore
+const userStore = useUserStore()
 
 const getMenuTree = async () => {
   try {
@@ -141,7 +139,9 @@ const getMenuTree = async () => {
 }
 
 const logout = () => {
-  localStorage.removeItem('loginUser');
+    localStorage.removeItem('loginUser');
+    // 清空 Pinia 中的用户信息
+  userStore.setUser({})
   ElMessage.success('已退出登录');
   router.push('/login');
 }
@@ -161,16 +161,17 @@ const handleCommand = (command) => {
   }
 }
 
-// 获取用户信息
-const getUserInfo = () => {
-  const loginUser = JSON.parse(localStorage.getItem('loginUser') || '{}');
-  userData.nickName = loginUser.nickName || '管理员';
-  userData.avatar = loginUser.avatar || '';
-}
 
+
+// 用 Pinia 状态来初始化（Pinia 已在页面加载时从 localStorage 读过一次）
 onMounted(() => {
-  getMenuTree()
-  getUserInfo()
+    getMenuTree()
+  })
+
+// 用户数据
+const userData = reactive({
+  nickName: '',
+  avatar: ''
 })
 </script>
 
