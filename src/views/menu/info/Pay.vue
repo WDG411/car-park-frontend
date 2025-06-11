@@ -27,7 +27,7 @@
             <el-tag v-if="scope.row.status === '已缴费'" type="success">{{scope.row.status}}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.role === 'USER'">
+        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.roleList.includes('USER') ">
           <template v-slot="scope">
             <el-button type="primary" @click="pay(scope.row)" :disabled="scope.row.status === '已缴费'">缴费</el-button>
           </template>

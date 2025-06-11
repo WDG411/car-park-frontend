@@ -167,6 +167,7 @@ import { ref } from "vue";
 import { ElMessage } from "element-plus";
 import { loginApi, registerApi } from "@/api/login.js";
 import router from "@/router/index.js";
+import { useUserStore } from '@/stores/user'
 
 const isLogin = ref(true);
 const loginForm = ref({ username: "", password: "" });
@@ -205,10 +206,12 @@ async function doLogin() {
     loginLoading.value = true;
     const res = await loginApi(loginForm.value);
 
-    if (rememberMe.value) {
+    // TODO
+    /*if (rememberMe.value) {
       localStorage.setItem("loginUser", JSON.stringify(res.data));
-    }
-    localStorage.setItem("loginUser", JSON.stringify(res.data));
+    }*/
+    //localStorage.setItem("loginUser", JSON.stringify(res.data));
+    useUserStore().setUser(res.data)
     ElMessage.success("登录成功");
     router.push("/home");
   } catch (err) {

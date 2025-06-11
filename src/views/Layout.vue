@@ -15,10 +15,10 @@
           <div class="header-right">
             <el-dropdown @command="handleCommand" placement="bottom-end">
               <div class="user-info">
-                <span class="user-name">{{ userData.nickName || '管理员' }}</span>
+                <span class="user-name">{{ userStore.user.nickName || '管理员' }}</span>
                 <el-avatar
                     :size="36"
-                    :src="userData.avatar"
+                    :src="userStore.user.avatar"
                     class="user-avatar"
                 >
                   <el-icon><UserFilled /></el-icon>
@@ -45,6 +45,7 @@
           </div>
         </div>
       </el-header>
+
 
       <el-container class="main-container">
         <!-- 菜单栏 -->
@@ -139,9 +140,10 @@ const getMenuTree = async () => {
 }
 
 const logout = () => {
-    localStorage.removeItem('loginUser');
-    // 清空 Pinia 中的用户信息
-  userStore.setUser({})
+  // 清空 Pinia 中的用户信息  有bug
+  //userStore.setUser({})
+
+  localStorage.removeItem('loginUser');
   ElMessage.success('已退出登录');
   router.push('/login');
 }
@@ -165,14 +167,14 @@ const handleCommand = (command) => {
 
 // 用 Pinia 状态来初始化（Pinia 已在页面加载时从 localStorage 读过一次）
 onMounted(() => {
-    getMenuTree()
-  })
+  getMenuTree()
+})
 
-// 用户数据
+/*// 用户数据
 const userData = reactive({
   nickName: '',
   avatar: ''
-})
+})*/
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 <template>
   <div style="width: 50%;">
     <div class="card">
-      <el-form ref="formRef" :model="data.user" label-width="80px" style="padding: 20px 30px">
+      <el-form ref="formRef" :model="userStore.user" label-width="80px" style="padding: 20px 30px">
         <el-form-item label="头像">
           <el-upload
               class="avatar-uploader"
@@ -9,24 +9,24 @@
               :on-success="handleFileUpload"
               :show-file-list="false"
           >
-            <img v-if="data.user.avatar" alt="" :src="data.user.avatar" class="avatar" />
+            <img v-if="userStore.user.avatar" alt="" :src="userStore.user.avatar" class="avatar" />
             <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
           </el-upload>
         </el-form-item>
-        <el-form-item prop="username" label="用户名" >
-          <el-input v-model="data.user.username" disabled />
+        <el-form-item prop="username" label="用户名">
+          <el-input v-model="userStore.user.username" disabled />
         </el-form-item>
-        <el-form-item prop="name" label="昵称">
-          <el-input v-model="data.user.nickName" />
+        <el-form-item prop="nickName" label="昵称">
+          <el-input v-model="userStore.user.nickName" />
         </el-form-item>
         <el-form-item prop="phone" label="电话">
-          <el-input v-model="data.user.phone" />
+          <el-input v-model="userStore.user.phone" />
         </el-form-item>
         <el-form-item prop="email" label="邮箱">
-          <el-input v-model="data.user.email" />
+          <el-input v-model="userStore.user.email" />
         </el-form-item>
-        <el-form-item prop="account" label="余额" v-if="data.user.roleList.includes('USER')">
-          <span style="color: red">￥{{ data.user.account }}</span>
+        <el-form-item prop="account" label="余额" v-if="userStore.user.roleList.includes('USER')">
+          <span style="color: red">￥{{ userStore.user.account }}</span>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="update">保 存</el-button>
@@ -57,54 +57,61 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
-import request from "@/utils/request.js";
-import {ElMessage} from "element-plus";
+import { reactive, ref, onMounted } from 'vue'
+import request from '@/utils/request.js'
+import { ElMessage } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
+
 const baseUrl = import.meta.env.VITE_BASE_URL
+const userStore = useUserStore()
 
 const data = reactive({
-  user:  JSON.parse(localStorage.getItem('loginUser') || '{}'),
   account: 100,
   formVisible: false,
-  type: 'wei',
+  type: 'wei'
 })
 
 const formRef = ref()
-const emit = defineEmits(["updateUser"])
-const update = () => {
-  //let url = data.user.role === 'ADMIN' ? '/admin/update' : '/user/update'
-  let url = '/allUser/update';
-  request.put(url, data.user).then(res => {
+
+// 更新用户信息
+const update = async () => {
+  try {
+    const url = '/allUser/update'
+    const res = await request.put(url, userStore.user)
     if (res.code === 200) {
       ElMessage.success('更新成功')
-      localStorage.setItem('loginUser', JSON.stringify(data.user))
-      emit('updateUser')
-
-      // 延迟 1.5 秒再刷新页面
-      setTimeout(() => {
-        window.location.reload()
-      }, 1000)
+      // 更新 Pinia 状态
+      userStore.setUser({ ...userStore.user })
     } else {
-      ElMessage.success(res.msg)
+      ElMessage.error(res.msg)
     }
-  })
+  } catch (error) {
+    ElMessage.error('更新失败')
+  }
 }
 
-//	window.location.reload()
-
-const loadPerson = () => {
-  //let url = data.user.role === 'ADMIN' ? '/admin/selectById/' + data.user.id : '/user/selectById/' + data.user.id
-  let url = '/allUser/selectById/' + data.user.id
-  request.get(url).then(res => {
+// 加载用户信息
+const loadPerson = async () => {
+  try {
+    const url = '/allUser/selectById/' + userStore.user.id
+    const res = await request.get(url)
     if (res.code === 200) {
-      //localStorage.setItem('loginUser', JSON.stringify(res.data))
+      // 会导致token消失
+      //userStore.setUser(res.data)
     } else {
-      ElMessage.success(res.msg)
+      ElMessage.error(res.msg)
     }
-  })
+  } catch (error) {
+    ElMessage.error('获取用户信息失败')
+  }
 }
-loadPerson()
 
+onMounted(() => {
+  loadPerson()
+})
+
+// 充值
 const rechargeInit = () => {
   data.formVisible = true
 }
@@ -114,13 +121,16 @@ const recharge = () => {
     ElMessage.error('请输入正确的充值金额')
     return
   }
-  data.user.account = parseFloat(data.user.account) + parseFloat(data.account)
+  // 以分为单位安全运算
+  const newAccount = parseFloat(userStore.user.account) + parseFloat(data.account)
+  userStore.user.account = newAccount
   update()
   data.formVisible = false
 }
 
+// 上传头像成功处理
 const handleFileUpload = (res) => {
-  data.user.avatar = res.data
+  userStore.user.avatar = res.data
 }
 </script>
 
@@ -130,9 +140,7 @@ const handleFileUpload = (res) => {
   height: 120px;
   display: block;
 }
-</style>
 
-<style>
 .avatar-uploader .el-upload {
   border: 1px dashed var(--el-border-color);
   border-radius: 6px;

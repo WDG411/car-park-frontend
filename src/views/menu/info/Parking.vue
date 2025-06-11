@@ -1,13 +1,15 @@
 <template>
   <div>
     <div class="card" style="margin-bottom: 5px;">
-      <el-input v-model="data.userName" placeholder="请输入用户姓名查询" style="width: 240px; margin-right: 5px"></el-input>
+      <el-input v-model="data.userName" placeholder="请输入用户姓名查询"
+                v-if="data.user.roleList.includes('ADMIN')"
+                style="width: 240px; margin-right: 5px"></el-input>
       <el-input v-model="data.vehicleName" placeholder="请输入车牌号查询" style="width: 240px"></el-input>
       <el-button type="info" plain style="margin-left: 10px" @click="load">查询</el-button>
       <el-button type="warning" plain style="margin-left: 10px" @click="reset">重置</el-button>
     </div>
 
-    <div class="card" style="margin-bottom: 5px" v-if="data.user.role === 'ADMIN'">
+    <div class="card" style="margin-bottom: 5px" v-if="data.user.roleList.includes('ADMIN') ">
       <el-button type="primary" plain @click="handleAdd">车辆入场</el-button>
     </div>
 
@@ -20,7 +22,7 @@
         <el-table-column prop="startTime" label="入场时间"></el-table-column>
         <el-table-column prop="endTime" label="出场时间"></el-table-column>
         <el-table-column prop="status" label="状态"></el-table-column>
-        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.role === 'ADMIN'">
+        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.roleList.includes('ADMIN')">
           <template v-slot="scope">
             <el-button type="primary" @click="handleEdit(scope.row)" :disabled="scope.row.status === '已出场'">车辆出场</el-button>
           </template>
@@ -36,7 +38,7 @@
       <el-form :rules="data.rules" :model="data.form" label-width="80px"  style="padding: 20px 30px" ref="formRef">
         <el-form-item label="用户" prop="userId" v-if="data.flag">
           <el-select style="width: 100%" v-model="data.form.userId" @change="initVehicle">
-            <el-option v-for="item in data.userList" :key="item.id" :value="item.id" :label="item.name"></el-option>
+            <el-option v-for="item in data.userList" :key="item.id" :value="item.id" :label="item.username"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="车辆" prop="vehicleId" v-if="data.flag">
@@ -115,6 +117,7 @@ const data = reactive({
 const formRef = ref()
 
 const loadUser = () => {
+  //管理员查所有
   request.get('/user/selectAll').then(res => {
     if (res.code === 200) {
       data.userList = res.data
