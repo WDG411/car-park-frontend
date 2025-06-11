@@ -16,8 +16,8 @@
         <el-form-item prop="username" label="用户名" >
           <el-input v-model="data.user.username" disabled />
         </el-form-item>
-        <el-form-item prop="name" label="姓名">
-          <el-input v-model="data.user.name" />
+        <el-form-item prop="name" label="昵称">
+          <el-input v-model="data.user.nickName" />
         </el-form-item>
         <el-form-item prop="phone" label="电话">
           <el-input v-model="data.user.phone" />
@@ -25,7 +25,7 @@
         <el-form-item prop="email" label="邮箱">
           <el-input v-model="data.user.email" />
         </el-form-item>
-        <el-form-item prop="account" label="余额" v-if="data.user.role === 'USER'">
+        <el-form-item prop="account" label="余额" v-if="data.user.roleList.includes('USER')">
           <span style="color: red">￥{{ data.user.account }}</span>
         </el-form-item>
         <el-form-item>
@@ -72,23 +72,32 @@ const data = reactive({
 const formRef = ref()
 const emit = defineEmits(["updateUser"])
 const update = () => {
-  let url = data.user.role === 'ADMIN' ? '/admin/update' : '/user/update'
+  //let url = data.user.role === 'ADMIN' ? '/admin/update' : '/user/update'
+  let url = '/allUser/update';
   request.put(url, data.user).then(res => {
     if (res.code === 200) {
       ElMessage.success('更新成功')
       localStorage.setItem('loginUser', JSON.stringify(data.user))
       emit('updateUser')
+
+      // 延迟 1.5 秒再刷新页面
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } else {
       ElMessage.success(res.msg)
     }
   })
 }
 
+//	window.location.reload()
+
 const loadPerson = () => {
-  let url = data.user.role === 'ADMIN' ? '/admin/selectById/' + data.user.id : '/user/selectById/' + data.user.id
+  //let url = data.user.role === 'ADMIN' ? '/admin/selectById/' + data.user.id : '/user/selectById/' + data.user.id
+  let url = '/allUser/selectById/' + data.user.id
   request.get(url).then(res => {
     if (res.code === 200) {
-      localStorage.setItem('loginUser', JSON.stringify(res.data))
+      //localStorage.setItem('loginUser', JSON.stringify(res.data))
     } else {
       ElMessage.success(res.msg)
     }
