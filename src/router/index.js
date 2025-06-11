@@ -3,11 +3,16 @@ import LoginView from '../views/Login.vue';
 import NotFoundView from '../views/404.vue';
 import LayoutView from '../views/Layout.vue';
 import {getRouterApi} from "@/api/login.js";
+import PersonView from '../views/profile/Person.vue';
+import PasswordView from '../views/profile/Password.vue';
+
 
 const routes = [
     { path: '', redirect: '/login'},
     { path: '/', redirect: '/login' },
     { path: '/login', component: LoginView  },
+
+
 
     // 动态挂载路由 - 主布局
     {
@@ -15,7 +20,10 @@ const routes = [
         name: 'Home',
         component: LayoutView,
         redirect: '/index',
-        children: []
+        children: [
+            {path :'/person',component: PersonView},
+            {path :'/password',component: PasswordView},
+        ]
     }
 ]
 

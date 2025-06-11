@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
+  //add "170bc73b.r18.cpolar.top" to `server.allowedHosts` in vite.config.js.
   plugins: [
     vue(),
   ],
