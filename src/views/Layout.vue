@@ -110,6 +110,7 @@ import { getRouterApi } from "@/api/login.js";
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user'
+import {resetRouter} from "@/router/index.js";
 import {
   UserFilled,
   SwitchButton,
@@ -142,6 +143,8 @@ const getMenuTree = async () => {
 const logout = () => {
   // 清空 Pinia 中的用户信息  有bug
   //userStore.setUser({})
+
+  resetRouter()
 
   localStorage.removeItem('loginUser');
   localStorage.removeItem('Token');

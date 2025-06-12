@@ -8,11 +8,11 @@ import PasswordView from '../views/profile/Password.vue';
 import {useUserStore} from "@/stores/user.js";
 
 
-const routes = [
+// 定义初始路由配置
+const initialRoutes = [
     {path: '', redirect: '/login'},
     {path: '/', redirect: '/login'},
     {path: '/login', component: LoginView},
-
 
     // 动态挂载路由 - 主布局
     {
@@ -27,10 +27,49 @@ const routes = [
     }
 ]
 
+const routes = [...initialRoutes]; // 保持原有路由配置
+
 const router = createRouter({
     history: createWebHistory(),
     routes
 })
+
+// 重置路由函数
+export function resetRouter() {
+    // 获取当前所有路由
+    const currentRoutes = router.getRoutes();
+
+    // 移除动态添加的路由（除了初始路由）
+    currentRoutes.forEach(route => {
+        // 检查是否为动态添加的路由
+        const isInitialRoute = initialRoutes.some(initialRoute =>
+            initialRoute.path === route.path && initialRoute.name === route.name
+        );
+
+        // 如果不是初始路由，则移除
+        if (!isInitialRoute) {
+            if (route.name) {
+                router.removeRoute(route.name);
+            }
+        }
+    });
+
+    // 重置Home路由的children为初始状态
+    const homeRoute = router.getRoutes().find(r => r.name === 'Home');
+    if (homeRoute) {
+        // 移除Home路由
+        router.removeRoute('Home');
+
+        // 重新添加初始的Home路由
+        const initialHomeRoute = initialRoutes.find(r => r.name === 'Home');
+        if (initialHomeRoute) {
+            router.addRoute({
+                ...initialHomeRoute,
+                children: [...initialHomeRoute.children] // 深拷贝children
+            });
+        }
+    }
+}
 
 // 路由拦截
 router.beforeEach(async (to, from, next) => {
@@ -85,7 +124,21 @@ router.beforeEach(async (to, from, next) => {
 
             // 添加404路由和重定向路由
             router.addRoute({path: '/404', component: NotFoundView})
-            router.addRoute({path: '/:pathMatch(.*)*', redirect: '/404'});
+
+            // 不添加重定向路由，导致bug，todo
+            //router.addRoute({path: '/:pathMatch(.*)*', redirect: '/404'});
+            /*router.addRoute({
+                path: '/:pathMatch(.*)*',
+                beforeEnter: (to, from, next) => {
+                    // 如果是OAuth2路径，不处理（让其他逻辑处理）
+                    if (to.path.startsWith('/oauth2/authorization/')) {
+                        next(false); // 阻止导航，让beforeEach处理
+                        return;
+                    }
+                    // 其他未匹配的路径重定向到404
+                    next('/404');
+                }
+            });*/
 
             let homeRoute = router.getRoutes().find(r => r.name === 'Home');
             console.log('动态路由：', homeRoute);
