@@ -145,8 +145,11 @@ const logout = () => {
 
   localStorage.removeItem('loginUser');
   localStorage.removeItem('Token');
+  //  重置动态路由加载状态
+  userStore.setDynamicRoutesLoaded(false);
 
   ElMessage.success('已退出登录');
+
   router.push('/login');
 }
 

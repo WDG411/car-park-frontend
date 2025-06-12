@@ -13,11 +13,11 @@ import '@/assets/css/global.css'
 const app = createApp(App)
 const pinia = createPinia()
 
+app.use(pinia)
 app.use(router)
 app.use(ElementPlus, {
     locale: zhCn
 })
-app.use(pinia)
 
 app.mount('#app')
 

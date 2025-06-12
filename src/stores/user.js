@@ -7,6 +7,7 @@ export const useUserStore = defineStore('user', () => {
     const userInfo = ref(
         JSON.parse(localStorage.getItem('loginUser') || '{}')
     )
+    const dynamicRoutesLoaded = ref(false)
 
     // action：更新用户信息
     function setUser(newUser) {
@@ -23,10 +24,15 @@ export const useUserStore = defineStore('user', () => {
         userInfo.value.nickName = newUserInfo.nickName
     }
 
+    function setDynamicRoutesLoaded(value) {
+        dynamicRoutesLoaded.value = value;
+    }
 
     return {
         userInfo,
+        dynamicRoutesLoaded,
         setUser,
-        setUserInfo
+        setUserInfo,
+        setDynamicRoutesLoaded
     }
 })
