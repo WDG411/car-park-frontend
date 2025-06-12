@@ -1,15 +1,15 @@
 <template>
   <div style="width: 50%;">
     <div class="card">
-      <el-form ref="formRef" :rules="data.rules" :model="data.user" label-width="100px" style="padding: 20px 30px">
+      <el-form ref="formRef" :rules="data.rules" :model="data.userPasswordForm" label-width="100px" style="padding: 20px 30px">
         <el-form-item prop="password" label="原密码" >
-          <el-input v-model="data.user.password" show-password />
+          <el-input v-model="data.userPasswordForm.password" show-password />
         </el-form-item>
         <el-form-item prop="newPassword" label="新密码">
-          <el-input v-model="data.user.newPassword" show-password />
+          <el-input v-model="data.userPasswordForm.newPassword" show-password />
         </el-form-item>
         <el-form-item prop="confirmPassword" label="确认新密码">
-          <el-input v-model="data.user.confirmPassword" show-password />
+          <el-input v-model="data.userPasswordForm.confirmPassword" show-password />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="updatePassword">保存</el-button>
@@ -29,36 +29,46 @@ import router from "@/router/index.js";
 const validatePassword = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请确认密码'))
-  } else if (value !== data.user.newPassword) {
+  } else if (value !== data.userPasswordForm.newPassword) {
     callback(new Error('确认密码错误'))
   } else {
     callback()
   }
 }
+
+
 const data = reactive({
-  user:  JSON.parse(localStorage.getItem('loginUser') || '{}'),
+  userPasswordForm: {
+    id: JSON.parse(localStorage.getItem('loginUser') || '{}').id,  // 仅取 id
+    //username: JSON.parse(localStorage.getItem('loginUser') || '{}').username,
+    password: '',
+    newPassword: '',
+    confirmPassword: ''
+  },
   rules: {
     password: [
-      { required: true, message: '请输入原密码', trigger: 'blur' },
+      { required: true, message: '请输入原密码', trigger: 'blur' }
     ],
     newPassword: [
-      { required: true, message: '请输入新密码', trigger: 'blur' },
+      { required: true, message: '请输入新密码', trigger: 'blur' }
     ],
     confirmPassword: [
       { required: true, message: '请确认新密码', trigger: 'blur' },
-      { validator: validatePassword, required: true, trigger: 'blur' },
-    ],
+      { validator: validatePassword, trigger: 'blur' }
+    ]
   }
 })
+
 
 const formRef = ref()
 const updatePassword = () => {
   formRef.value.validate((valid => {
     if (valid) {
-      request.put('/updatePassword', data.user).then(res => {
+      request.put('/allUser/updatePassword', data.userPasswordForm).then(res => {
         if (res.code === 200) {
-          ElMessage.success('操作成功')
-          logout()
+          ElMessage.success('更新密码成功')
+          //为什么要登出？
+          //logout()
         } else {
           ElMessage.error(res.msg)
         }

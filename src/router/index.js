@@ -5,6 +5,7 @@ import LayoutView from '../views/Layout.vue';
 import {getRouterApi} from "@/api/login.js";
 import PersonView from '../views/profile/Person.vue';
 import PasswordView from '../views/profile/Password.vue';
+import {useUserStore} from "@/stores/user.js";
 
 
 const routes = [
@@ -37,11 +38,24 @@ let dynamicRoutesLoaded = false;
 
 // 路由拦截
 router.beforeEach(async (to, from, next) => {
+
+    console.log('路由拦截：', from)
+    console.log('路由拦截：', to)
+
+    if (to.path.startsWith('/oauth2/authorization/')) {
+        // 绝对后端地址
+        window.location.href =  'http://localhost:8080' +  to.fullPath
+        return // 一定不要 next()
+    }
+
+
+
     if (to.path === '/login') {
         next();
     } else {
         // 如果动态路由未加载，先加载路由
         if (!dynamicRoutesLoaded) {
+
             const res = await getRouterApi();
             if (res.code === 200) {
                 let addDynamicRoutes = dynamicRoutes(res.data);

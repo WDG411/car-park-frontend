@@ -15,10 +15,10 @@
           <div class="header-right">
             <el-dropdown @command="handleCommand" placement="bottom-end">
               <div class="user-info">
-                <span class="user-name">{{ userStore.user.nickName || '管理员' }}</span>
+                <span class="user-name">{{ userStore.userInfo.nickName || '管理员' }}</span>
                 <el-avatar
                     :size="36"
-                    :src="userStore.user.avatar"
+                    :src="userStore.userInfo.avatar"
                     class="user-avatar"
                 >
                   <el-icon><UserFilled /></el-icon>
@@ -144,6 +144,8 @@ const logout = () => {
   //userStore.setUser({})
 
   localStorage.removeItem('loginUser');
+  localStorage.removeItem('Token');
+
   ElMessage.success('已退出登录');
   router.push('/login');
 }

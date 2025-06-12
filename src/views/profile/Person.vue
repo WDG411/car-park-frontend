@@ -1,7 +1,7 @@
 <template>
   <div style="width: 50%;">
     <div class="card">
-      <el-form ref="formRef" :model="userStore.user" label-width="80px" style="padding: 20px 30px">
+      <el-form ref="formRef" :model="userData" label-width="80px" style="padding: 20px 30px">
         <el-form-item label="头像">
           <el-upload
               class="avatar-uploader"
@@ -9,28 +9,32 @@
               :on-success="handleFileUpload"
               :show-file-list="false"
           >
-            <img v-if="userStore.user.avatar" alt="" :src="userStore.user.avatar" class="avatar" />
+            <img v-if="userData.avatar" alt="" :src="userData.avatar" class="avatar" />
             <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
           </el-upload>
         </el-form-item>
         <el-form-item prop="username" label="用户名">
-          <el-input v-model="userStore.user.username" disabled />
+          <el-input v-model="userData.username" disabled />
         </el-form-item>
         <el-form-item prop="nickName" label="昵称">
-          <el-input v-model="userStore.user.nickName" />
+          <el-input v-model="userData.nickName" />
         </el-form-item>
         <el-form-item prop="phone" label="电话">
-          <el-input v-model="userStore.user.phone" />
+          <el-input v-model="userData.phone" />
         </el-form-item>
         <el-form-item prop="email" label="邮箱">
-          <el-input v-model="userStore.user.email" />
+          <el-input v-model="userData.email" />
         </el-form-item>
-        <el-form-item prop="account" label="余额" v-if="userStore.user.roleList.includes('USER')">
-          <span style="color: red">￥{{ userStore.user.account }}</span>
+        <el-form-item prop="account" label="余额" v-if="userStore.userInfo.roleList.includes('USER')">
+          <span style="color: red">￥{{ userStore.userInfo.account }}</span>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="update">保 存</el-button>
-          <el-button type="warning" @click="rechargeInit">充 值</el-button>
+          <el-button type="warning"
+                     @click="rechargeInit"
+                     v-if="!(userStore.userInfo.roleList.includes('ADMIN'))"
+          >充 值
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -72,17 +76,30 @@ const data = reactive({
   type: 'wei'
 })
 
+const userData = ref({
+  username: userStore.userInfo.username,
+  nickName: userStore.userInfo.nickName,
+  phone: userStore.userInfo.phone,
+  email: userStore.userInfo.email,
+  avatar: userStore.userInfo.avatar,
+  account:userStore.userInfo.account
+})
+
 const formRef = ref()
 
 // 更新用户信息
 const update = async () => {
   try {
     const url = '/allUser/update'
-    const res = await request.put(url, userStore.user)
+    userStore.setUserInfo(userData.value)
+
+    console.log(userStore.userInfo)
+
+    const res = await request.put(url, userStore.userInfo)
     if (res.code === 200) {
       ElMessage.success('更新成功')
       // 更新 Pinia 状态
-      userStore.setUser({ ...userStore.user })
+      userStore.setUser({ ...userStore.userInfo })
     } else {
       ElMessage.error(res.msg)
     }
@@ -94,7 +111,7 @@ const update = async () => {
 // 加载用户信息
 const loadPerson = async () => {
   try {
-    const url = '/allUser/selectById/' + userStore.user.id
+    const url = '/allUser/selectById/' + userStore.userInfo.id
     const res = await request.get(url)
     if (res.code === 200) {
       // 会导致token消失
@@ -122,15 +139,15 @@ const recharge = () => {
     return
   }
   // 以分为单位安全运算
-  const newAccount = parseFloat(userStore.user.account) + parseFloat(data.account)
-  userStore.user.account = newAccount
+  const newAccount = parseFloat(userStore.userInfo.account) + parseFloat(data.account)
+  userStore.userInfo.account = newAccount
   update()
   data.formVisible = false
 }
 
 // 上传头像成功处理
 const handleFileUpload = (res) => {
-  userStore.user.avatar = res.data
+  userStore.userInfo.avatar = res.data
 }
 </script>
 

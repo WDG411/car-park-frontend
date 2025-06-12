@@ -12,3 +12,7 @@ export const getRouterApi = () => {
 export const registerApi = (data) => {
     return request.post('/register', data)
 }
+
+export const thirdLoginApi = (provider) => {
+    return request.get(`/oauth2/authorization/${provider}`)
+}

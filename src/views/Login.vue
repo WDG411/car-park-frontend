@@ -165,7 +165,7 @@
 <script setup>
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
-import { loginApi, registerApi } from "@/api/login.js";
+import { loginApi, registerApi,thirdLoginApi } from "@/api/login.js";
 import router from "@/router/index.js";
 import { useUserStore } from '@/stores/user'
 
@@ -177,7 +177,7 @@ const loginRef = ref(null);
 const regRef = ref(null);
 const loginLoading = ref(false);
 const registerLoading = ref(false);
-
+const userStore = useUserStore();
 const loginRules = {
   username: [{ required: true, message: "请输入用户名或邮箱", trigger: "blur" }],
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
@@ -210,8 +210,8 @@ async function doLogin() {
     /*if (rememberMe.value) {
       localStorage.setItem("loginUser", JSON.stringify(res.data));
     }*/
-    //localStorage.setItem("loginUser", JSON.stringify(res.data));
-    useUserStore().setUser(res.data)
+    userStore.setUser(res.data)
+    localStorage.setItem("Token", res.data.token);
     ElMessage.success("登录成功");
     router.push("/home");
   } catch (err) {
@@ -233,6 +233,7 @@ async function doRegister() {
     const res = await registerApi(regForm.value);
     ElMessage.success("注册成功");
     localStorage.setItem("loginUser", JSON.stringify(res.data));
+    localStorage.setItem("Token", res.data.token);
     // isLogin.value = true;
     regForm.value = { username: "", password: "", email: "" };
     router.push("/home");
@@ -245,8 +246,17 @@ async function doRegister() {
 
 // 第三方登录
 function oauth(provider) {
-  window.location.href = `/oauth2/authorization/${provider}`;
+  router.push(`/oauth2/authorization/${provider}`)
 }
+
+
+/*// 第三方登录
+function oauth(provider) {
+  // 直接跳转，绕过Vue Router
+  //window.location.replace(`/oauth2/authorization/${provider}`);
+  // 或者使用
+   window.open(`/oauth2/authorization/${provider}`, '_self');
+}*/
 </script>
 
 <style scoped>
