@@ -9,6 +9,7 @@
 
     <div class="card" style="margin-bottom: 5px">
 <!-- 弃用新增     <el-button type="primary" plain @click="handleAdd">新增</el-button>-->
+      <el-button type="warning" plain @click="toAdmin">提升为管理员</el-button>
       <el-button type="danger" plain @click="delBatch">批量删除</el-button>
     </div>
 
@@ -194,13 +195,30 @@ const handleSelectionChange = (rows) => {
   data.ids = rows.map(v => v.id)
 }
 
+const toAdmin = () => {
+  if (!data.ids.length) {
+    ElMessage.warning("请选择用户")
+    return
+  }
+  ElMessageBox.confirm('确认将改用户提升为管理员吗?', "赋予管理员", { type: 'warning' }).then(res => {
+    request.put('/admin/liftToAdmin', data.ids).then(res => {
+      if (res.code === 200) {
+        ElMessage.success('操作成功')
+        load()  // 刷新表格数据
+      } else {
+        ElMessage.error(res.msg)
+      }
+    })
+  }).catch(err => console.log(err))
+}
+
 const delBatch = () => {
   if (!data.ids.length) {
     ElMessage.warning("请选择数据")
     return
   }
   ElMessageBox.confirm('删除后数据无法恢复，您确定删除吗?', '删除确认', { type: 'warning' }).then(res => {
-    request.delete('/user/delete/batch', {data: data.ids}).then(res => {
+    request.delete('/user/delete/batch', {data:data.ids}).then(res => {
       if (res.code === 200) {
         ElMessage.success('操作成功')
         load()  // 刷新表格数据

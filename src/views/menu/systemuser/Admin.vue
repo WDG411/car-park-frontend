@@ -10,6 +10,7 @@
 
     <div class="card" style="margin-bottom: 5px">
 <!-- 弃用新增     <el-button type="primary" plain @click="handleAdd">新增</el-button>-->
+      <el-button type="danger" plain @click="downToUser">取消管理员权限</el-button>
       <el-button type="danger" plain @click="delBatch">批量删除</el-button>
     </div>
 
@@ -206,6 +207,23 @@ const del = (id) => {
 // 批量选择id
 const handleSelectionChange = (rows) => {
   data.ids = rows.map(v => v.id)
+}
+
+const downToUser = () => {
+  if (!data.ids.length) {
+    ElMessage.warning("请选择用户")
+    return
+  }
+  ElMessageBox.confirm('您确定取消该用户的管理员身份吗?', '取消管理员权限', { type: 'warning' }).then(res => {
+    request.put('/admin/downToUser',  data.ids).then(res => {
+      if (res.code === 200) {
+        ElMessage.success('操作成功')
+        load()  // 刷新表格数据
+      } else {
+        ElMessage.error(res.msg)
+      }
+    })
+  }).catch(err => console.log(err))
 }
 
 // 批量删除
