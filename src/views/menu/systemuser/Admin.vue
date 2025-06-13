@@ -178,7 +178,6 @@ const update = () => {
   request.put('/admin/update', data.form).then(res => {
     if (res.code === 200) {
       ElMessage.success('操作成功')
-      //todo
       userStore.setUserInfo(data.form)
       data.formVisible = false
       load()

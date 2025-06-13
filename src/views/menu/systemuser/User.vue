@@ -67,11 +67,15 @@
         </el-form-item>
         <el-form-item prop="avatar" label="头像">
           <el-upload
-              :action="baseUrl + '/files/upload'"
+              class="avatar-uploader"
+              :show-file-list="false"
+              :http-request="uploadWithRequest"
               :on-success="handleFileUpload"
-              list-type="picture"
+              :before-upload="beforeAvatarUpload"
           >
-            <el-button type="primary">上传头像</el-button>
+            <img v-if="data.form.avatar" alt="" :src="data.form.avatar" class="avatar" />
+            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+            <el-button type="primary">修改头像</el-button>
           </el-upload>
         </el-form-item>
         <el-form-item label="电话" prop="phone">
@@ -96,8 +100,9 @@
 import { reactive } from "vue"
 import request from "@/utils/request.js";
 import {ElMessage, ElMessageBox} from "element-plus";
-import {Delete, Edit} from "@element-plus/icons-vue";
-const baseUrl = import.meta.env.VITE_BASE_URL
+import {Delete, Edit, Plus} from "@element-plus/icons-vue";
+import {useUserStore} from "@/stores/user.js";
+
 const data = reactive({
   user: JSON.parse(localStorage.getItem('loginUser') || '{}'),
   tableData: [],
@@ -111,6 +116,8 @@ const data = reactive({
   name: null,
   username: null
 })
+
+const userStore = useUserStore()
 
 // 加载表格数据
 const load = () => {
@@ -157,6 +164,7 @@ const update = () => {
   request.put('/user/update', data.form).then(res => {
     if (res.code === 200) {
       data.formVisible = false
+      userStore.setUserInfo(data.form)
       ElMessage.success('操作成功')
       load()
     } else {
@@ -204,12 +212,43 @@ const delBatch = () => {
 }
 
 const save = () => {
-  data.form.id ? update() : add()
+  data.form.id ? update() : ElMessage.warning("请选择数据")
 }
 
 // 头像上传
 const handleFileUpload = (res) => {
   data.form.avatar = res.data
+}
+
+const uploadWithRequest = async (uploadOption) => {
+  // uploadOption.file 是当前要上传的 File 对象
+  const form = new FormData()
+  form.append('file', uploadOption.file)
+
+  try {
+    const res = await request.post('/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    // 成功后手动调用 el-upload 的 onSuccess
+    uploadOption.onSuccess(res, uploadOption.file)
+    // 更新 avatar
+    //userStore.userInfo.avatar = res.data
+  } catch (err) {
+    uploadOption.onError(err)
+    ElMessage.error('上传失败')
+  }
+}
+
+// 文件上传之前触发
+const beforeAvatarUpload = (rawFile) => {
+  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
+    ElMessage.error('只支持上传图片')
+    return false
+  } else if (rawFile.size / 1024 / 1024 > 10) {
+    ElMessage.error('只能上传10M以内图片')
+    return false
+  }
+  return true
 }
 
 const reset = () => {
@@ -234,3 +273,32 @@ const handleSizeChange = (size) => {
 load()
 
 </script>
+
+<style scoped>
+.avatar-uploader .avatar {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed var(--el-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--el-transition-duration-fast);
+}
+
+.avatar-uploader .el-upload:hover {
+  border-color: var(--el-color-primary);
+}
+
+.el-icon.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 120px;
+  height: 120px;
+  text-align: center;
+}
+</style>
