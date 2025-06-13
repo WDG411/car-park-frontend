@@ -1,20 +1,21 @@
 <template>
   <div>
     <div class="card" style="margin-bottom: 5px;">
-      <el-input v-model="data.name" placeholder="请输入昵称查询" style="width: 240px"></el-input>
+      <el-input v-model="data.name" prefix-icon="Search" style="width: 240px; margin-right: 10px" placeholder="请输入昵称查询"></el-input>
+      <el-input v-model="data.username" prefix-icon="Search" style="width: 240px; margin-right: 10px" placeholder="请输入用户名查询"></el-input>
       <el-button type="info" plain style="margin-left: 10px" @click="load">查询</el-button>
       <el-button type="warning" plain style="margin-left: 10px" @click="reset">重置</el-button>
     </div>
 
     <div class="card" style="margin-bottom: 5px">
-      <el-button type="primary" plain @click="handleAdd">新增</el-button>
+<!-- 弃用新增     <el-button type="primary" plain @click="handleAdd">新增</el-button>-->
       <el-button type="danger" plain @click="delBatch">批量删除</el-button>
     </div>
 
     <div class="card" style="margin-bottom: 5px;">
       <el-table :data="data.tableData" stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column prop="username" label="账号"></el-table-column>
+        <el-table-column prop="username" label="用户名"></el-table-column>
         <el-table-column prop="nickName" label="昵称"></el-table-column>
         <el-table-column prop="avatar" label="头像">
           <template v-slot="scope">
@@ -36,13 +37,21 @@
 
     </div>
     <div class="card" v-if="data.total">
-      <el-pagination @current-change="load" background layout="total, prev, pager, next" :page-size="data.pageSize" v-model:current-page="data.pageNum" :total="data.total"/>
+      <el-pagination
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+          background
+          layout="total, sizes, prev, pager, next"
+          v-model:page-size="data.pageSize"
+          v-model:current-page="data.pageNum"
+          :page-sizes="data.pageSizes"
+          :total="data.total"/>
     </div>
 
     <el-dialog title="用户信息" v-model="data.formVisible" width="40%" :close-on-click-modal="false" destroy-on-close>
       <el-form :model="data.form" label-width="80px"  style="padding: 20px 30px" ref="formRef">
-        <el-form-item label="账号" prop="username">
-          <el-input v-model="data.form.username" placeholder="账号"></el-input>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="data.form.username" placeholder="用户名"></el-input>
         </el-form-item>
 
 <!--        <el-form-item prop="password" label="密码">
@@ -53,8 +62,8 @@
               show-password
           ></el-input>
         </el-form-item>-->
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="data.form.nickName" placeholder="姓名"></el-input>
+        <el-form-item label="昵称" prop="name">
+          <el-input v-model="data.form.nickName" placeholder="昵称"></el-input>
         </el-form-item>
         <el-form-item prop="avatar" label="头像">
           <el-upload
@@ -95,10 +104,12 @@ const data = reactive({
   total: 0,
   pageNum: 1,  // 当前的页码
   pageSize: 5,  // 每页的个数
+  pageSizes: [5, 10, 15, 20, 50],  // 可选的每页记录数选项
   formVisible: false,
   form: {},
   ids: [],
   name: null,
+  username: null
 })
 
 // 加载表格数据
@@ -107,7 +118,8 @@ const load = () => {
     params: {
       pageNum: data.pageNum,
       pageSize: data.pageSize,
-      nickName: data.name
+      nickName: data.name,
+      username: data.username
     }
   }).then(res => {
     data.tableData = res.data?.list || []
@@ -202,6 +214,20 @@ const handleFileUpload = (res) => {
 
 const reset = () => {
   data.name = null
+  data.username = null
+  load()
+}
+
+// 处理页码变化
+const handleCurrentChange = (page) => {
+  data.pageNum = page
+  load()
+}
+
+// 处理每页记录数变化
+const handleSizeChange = (size) => {
+  data.pageSize = size
+  data.pageNum = 1  // 重置到第一页
   load()
 }
 

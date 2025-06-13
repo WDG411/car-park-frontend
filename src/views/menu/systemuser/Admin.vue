@@ -3,19 +3,20 @@
 
     <div class="card" style="margin-bottom: 5px;">
       <el-input v-model="data.name" prefix-icon="Search" style="width: 240px; margin-right: 10px" placeholder="请输入昵称查询"></el-input>
+      <el-input v-model="data.username" prefix-icon="Search" style="width: 240px; margin-right: 10px" placeholder="请输入用户名查询"></el-input>
       <el-button type="info" plain @click="load">查询</el-button>
       <el-button type="warning" plain style="margin: 0 10px" @click="reset">重置</el-button>
     </div>
 
     <div class="card" style="margin-bottom: 5px">
-      <el-button type="primary" plain @click="handleAdd">新增</el-button>
+<!-- 弃用新增     <el-button type="primary" plain @click="handleAdd">新增</el-button>-->
       <el-button type="danger" plain @click="delBatch">批量删除</el-button>
     </div>
 
     <div class="card" style="margin-bottom: 5px">
       <el-table stripe :data="data.tableData" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="username" label="账号" />
+        <el-table-column prop="username" label="用户名" />
         <el-table-column prop="nickName" label="昵称"/>
         <el-table-column prop="avatar" label="头像">
           <template v-slot="scope">
@@ -25,7 +26,7 @@
         </el-table-column>
         <el-table-column prop="phone" label="电话" />
         <el-table-column prop="email" label="邮箱" />
-<!--        <el-table-column prop="role" label="角色" />-->
+        <!--        <el-table-column prop="role" label="角色" />-->
         <el-table-column label="操作" width="100" fixed="right">
           <template v-slot="scope">
             <el-button type="primary" circle :icon="Edit" @click="handleEdit(scope.row)"></el-button>
@@ -36,7 +37,15 @@
     </div>
 
     <div class="card" v-if="data.total">
-      <el-pagination @current-change="load" background layout="prev, pager, next" :page-size="data.pageSize" v-model:current-page="data.pageNum" :total="data.total"/>
+      <el-pagination
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          v-model:page-size="data.pageSize"
+          v-model:current-page="data.pageNum"
+          :page-sizes="data.pageSizes"
+          :total="data.total"/>
     </div>
 
     <el-dialog v-model="data.formVisible" title="管理员信息" width="40%" destroy-on-close>
@@ -44,15 +53,15 @@
         <el-form-item prop="username" label="用户名" >
           <el-input v-model="data.form.username" placeholder="请输入用户名"></el-input>
         </el-form-item>
-<!--        需要密码-->            <!--废弃-->
-<!--        <el-form-item prop="password" label="密码">
-          <el-input
-              v-model="data.form.password"
-              type="password"
-              placeholder="请输入密码"
-              show-password
-          ></el-input>
-        </el-form-item>-->
+        <!--        需要密码-->            <!--废弃-->
+        <!--        <el-form-item prop="password" label="密码">
+                  <el-input
+                      v-model="data.form.password"
+                      type="password"
+                      placeholder="请输入密码"
+                      show-password
+                  ></el-input>
+                </el-form-item>-->
 
         <el-form-item prop="name" label="昵称">
           <el-input v-model="data.form.nickName" placeholder="请输入名称" />
@@ -65,9 +74,9 @@
         </el-form-item>
         <el-form-item prop="avatar" label="头像">
           <el-upload
-          :action="baseUrl + '/files/upload'"
-          :on-success="handleFileUpload"
-          list-type="picture"
+              :action="baseUrl + '/files/upload'"
+              :on-success="handleFileUpload"
+              list-type="picture"
           >
             <el-button type="primary">上传头像</el-button>
           </el-upload>
@@ -95,11 +104,13 @@ const data = reactive({
   tableData: [],
   total: 0,
   pageNum: 1,  // 当前的页码
-  pageSize: 5,  // 每页的个数
+  pageSize: 5,  // 每页的个数，默认改为10
+  pageSizes: [5, 10, 15, 20, 50],  // 可选的每页记录数选项
   formVisible: false,
   form: {},
   ids: [],
   name: null,
+  username: null,
 })
 
 // 加载表格数据
@@ -108,12 +119,26 @@ const load = () => {
     params: {
       pageNum: data.pageNum,
       pageSize: data.pageSize,
-      nickName: data.name
+      nickName: data.name,
+      username: data.username
     }
   }).then(res => {
     data.tableData = res.data?.list || []
     data.total = res.data?.total
   })
+}
+
+// 处理页码变化
+const handleCurrentChange = (page) => {
+  data.pageNum = page
+  load()
+}
+
+// 处理每页记录数变化
+const handleSizeChange = (size) => {
+  data.pageSize = size
+  data.pageNum = 1  // 重置到第一页
+  load()
 }
 
 // 打开新增弹窗
@@ -206,6 +231,7 @@ const handleFileUpload = (res) => {
 // 搜索重置
 const reset = () => {
   data.name = ''
+  data.username = ''
   load()
 }
 
