@@ -5,9 +5,10 @@
         <el-form-item label="头像">
           <el-upload
               class="avatar-uploader"
-              :action="baseUrl + '/files/upload'"
-              :on-success="handleFileUpload"
               :show-file-list="false"
+              :http-request="uploadWithRequest"
+              :on-success="handleFileUpload"
+              :before-upload="beforeAvatarUpload"
           >
             <img v-if="userData.avatar" alt="" :src="userData.avatar" class="avatar" />
             <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
@@ -147,8 +148,41 @@ const recharge = () => {
 
 // 上传头像成功处理
 const handleFileUpload = (res) => {
-  userStore.userInfo.avatar = res.data
+  //userStore.userInfo.avatar = res.data
+  userData.value.avatar = res.data   // ← 同步更新到本地表单数据
 }
+
+const uploadWithRequest = async (uploadOption) => {
+  // uploadOption.file 是当前要上传的 File 对象
+  const form = new FormData()
+  form.append('file', uploadOption.file)
+
+  try {
+    const res = await request.post('/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    // 成功后手动调用 el-upload 的 onSuccess
+    uploadOption.onSuccess(res, uploadOption.file)
+    // 更新 avatar
+    //userStore.userInfo.avatar = res.data
+  } catch (err) {
+    uploadOption.onError(err)
+    ElMessage.error('上传失败')
+  }
+}
+
+// 文件上传之前触发
+const beforeAvatarUpload = (rawFile) => {
+  if (rawFile.type !== 'image/jpeg' && rawFile.type !== 'image/png') {
+    ElMessage.error('只支持上传图片')
+    return false
+  } else if (rawFile.size / 1024 / 1024 > 10) {
+    ElMessage.error('只能上传10M以内图片')
+    return false
+  }
+  return true
+}
+
 </script>
 
 <style scoped>
