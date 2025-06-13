@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="card" style="margin-bottom: 5px;">
-      <el-input v-model="data.name" placeholder="请输入关键字查询" style="width: 240px"></el-input>
+      <el-input v-model="data.name" placeholder="请输入昵称查询" style="width: 240px"></el-input>
       <el-button type="info" plain style="margin-left: 10px" @click="load">查询</el-button>
       <el-button type="warning" plain style="margin-left: 10px" @click="reset">重置</el-button>
     </div>
@@ -15,14 +15,14 @@
       <el-table :data="data.tableData" stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55"></el-table-column>
         <el-table-column prop="username" label="账号"></el-table-column>
-        <el-table-column prop="name" label="姓名"></el-table-column>
+        <el-table-column prop="nickName" label="昵称"></el-table-column>
         <el-table-column prop="avatar" label="头像">
           <template v-slot="scope">
             <el-image style="width: 40px; height: 40px; border-radius: 50%; display: block" v-if="scope.row.avatar"
                       :src="scope.row.avatar" :preview-src-list="[scope.row.avatar]" preview-teleported></el-image>
           </template>
         </el-table-column>
-        <el-table-column prop="role" label="角色"></el-table-column>
+<!--        <el-table-column prop="role" label="角色"></el-table-column>-->
         <el-table-column prop="phone" label="电话"></el-table-column>
         <el-table-column prop="email" label="邮箱"></el-table-column>
         <el-table-column prop="account" label="余额"></el-table-column>
@@ -44,8 +44,17 @@
         <el-form-item label="账号" prop="username">
           <el-input v-model="data.form.username" placeholder="账号"></el-input>
         </el-form-item>
+
+<!--        <el-form-item prop="password" label="密码">
+          <el-input
+              v-model="data.form.password"
+              type="password"
+              placeholder="请输入密码"
+              show-password
+          ></el-input>
+        </el-form-item>-->
         <el-form-item label="姓名" prop="name">
-          <el-input v-model="data.form.name" placeholder="姓名"></el-input>
+          <el-input v-model="data.form.nickName" placeholder="姓名"></el-input>
         </el-form-item>
         <el-form-item prop="avatar" label="头像">
           <el-upload
@@ -98,7 +107,7 @@ const load = () => {
     params: {
       pageNum: data.pageNum,
       pageSize: data.pageSize,
-      name: data.name
+      nickName: data.name
     }
   }).then(res => {
     data.tableData = res.data?.list || []

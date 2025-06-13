@@ -2,7 +2,7 @@
   <div>
 
     <div class="card" style="margin-bottom: 5px;">
-      <el-input v-model="data.name" prefix-icon="Search" style="width: 240px; margin-right: 10px" placeholder="请输入姓名查询"></el-input>
+      <el-input v-model="data.name" prefix-icon="Search" style="width: 240px; margin-right: 10px" placeholder="请输入昵称查询"></el-input>
       <el-button type="info" plain @click="load">查询</el-button>
       <el-button type="warning" plain style="margin: 0 10px" @click="reset">重置</el-button>
     </div>
@@ -16,7 +16,7 @@
       <el-table stripe :data="data.tableData" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
         <el-table-column prop="username" label="账号" />
-        <el-table-column prop="name" label="名称"/>
+        <el-table-column prop="nickName" label="昵称"/>
         <el-table-column prop="avatar" label="头像">
           <template v-slot="scope">
             <el-image style="width: 40px; height: 40px; border-radius: 50%; display: block" v-if="scope.row.avatar"
@@ -25,7 +25,7 @@
         </el-table-column>
         <el-table-column prop="phone" label="电话" />
         <el-table-column prop="email" label="邮箱" />
-        <el-table-column prop="role" label="角色" />
+<!--        <el-table-column prop="role" label="角色" />-->
         <el-table-column label="操作" width="100" fixed="right">
           <template v-slot="scope">
             <el-button type="primary" circle :icon="Edit" @click="handleEdit(scope.row)"></el-button>
@@ -44,8 +44,18 @@
         <el-form-item prop="username" label="用户名" >
           <el-input v-model="data.form.username" placeholder="请输入用户名"></el-input>
         </el-form-item>
-        <el-form-item prop="name" label="名称">
-          <el-input v-model="data.form.name" placeholder="请输入名称" />
+<!--        需要密码-->            <!--废弃-->
+<!--        <el-form-item prop="password" label="密码">
+          <el-input
+              v-model="data.form.password"
+              type="password"
+              placeholder="请输入密码"
+              show-password
+          ></el-input>
+        </el-form-item>-->
+
+        <el-form-item prop="name" label="昵称">
+          <el-input v-model="data.form.nickName" placeholder="请输入名称" />
         </el-form-item>
         <el-form-item prop="phone" label="电话">
           <el-input v-model="data.form.phone" placeholder="请输入电话" />
@@ -98,7 +108,7 @@ const load = () => {
     params: {
       pageNum: data.pageNum,
       pageSize: data.pageSize,
-      name: data.name
+      nickName: data.name
     }
   }).then(res => {
     data.tableData = res.data?.list || []
