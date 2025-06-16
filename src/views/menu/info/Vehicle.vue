@@ -15,7 +15,19 @@
       <el-table :data="data.tableData" stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55"></el-table-column>
         <el-table-column prop="name" label="车牌号"></el-table-column>
-        <el-table-column prop="userName" label="所属用户"></el-table-column>
+
+        <!-- 车辆类型列 -->
+        <el-table-column label="车辆类型">
+          <template #default="{ row }">
+            {{ typeText(row.type) }}
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="userName" label="所属用户"
+          v-if="data.user.roleList.includes('ADMIN')"
+        ></el-table-column>
+
+
         <el-table-column label="操作" width="100" fixed="right">
           <template v-slot="scope">
             <el-button type="primary" circle :icon="Edit" @click="handleEdit(scope.row)"></el-button>
@@ -34,7 +46,7 @@
         <el-form-item label="车牌号" prop="name">
           <el-input v-model="data.form.name" placeholder="车牌号"></el-input>
         </el-form-item>
-        <el-form-item label="所属用户" prop="userId" v-if="data.user.role === 'ADMIN'">
+        <el-form-item label="所属用户" prop="userId" v-if="data.user.roleList.includes('ADMIN')">
           <el-select style="width: 100%" v-model="data.form.userId">
             <el-option v-for="item in data.userList" :key="item.id" :value="item.id" :label="item.name"></el-option>
           </el-select>
@@ -109,6 +121,16 @@ const handleAdd = () => {
     data.form.userId = data.user.id
   }
   data.formVisible = true
+}
+
+const typeText = (t) => {
+  switch (t) {
+    case 1: return '内部车'
+    case 2: return '月租车'
+    case 3: return '临时车'
+    case 4: return '黑名单'
+    default: return '未知'
+  }
 }
 
 // 打开编辑弹窗
