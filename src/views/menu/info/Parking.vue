@@ -27,7 +27,7 @@
         <el-table-column prop="startTime" label="入场时间"></el-table-column>
         <el-table-column prop="endTime" label="出场时间"></el-table-column>
         <el-table-column prop="status" label="状态"></el-table-column>
-        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.roleList.includes('ADMIN')">
+        <el-table-column label="操作" width="100" fixed="right">
           <template v-slot="scope">
             <el-button type="primary" @click="handleEdit(scope.row)" :disabled="scope.row.status === '已出场'">车辆出场</el-button>
           </template>
