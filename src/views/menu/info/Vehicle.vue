@@ -23,8 +23,15 @@
 
     <!-- 操作区 -->
     <div class="card" style="margin-bottom: 20px; padding: 20px;">
-      <el-button type="primary" plain @click="handleAdd">新增</el-button>
-      <el-button type="danger" plain @click="delBatch">批量删除</el-button>
+      <!--      <el-button type="primary" plain @click="handleAdd">新增</el-button>-->
+      <el-button type="danger" plain @click="delBatch">解绑车辆</el-button>
+      <el-button type="warning" plain style="margin-left: 10px"
+                 v-if="data.user.roleList.includes('USER')"
+                 @click="openBindDialog">绑定我的车辆</el-button>
+      <el-button type="primary"
+                 v-if="data.user.roleList.includes('ADMIN')"
+                 plain
+                 @click="handleSetType">设置车辆类型</el-button>
     </div>
 
     <!-- 表格区 -->
@@ -94,7 +101,7 @@
         </el-table-column>
 
         <!-- 购买月卡 -->
-        <el-table-column label="购买月卡" min-width="180" align="center">
+        <el-table-column label="购买月卡" min-width="180" align="center" v-if="data.user.roleList.includes('USER')">
           <template #default="{ row }">
             <el-button
                 type="success"
@@ -195,6 +202,89 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 设置车辆类型弹窗 -->
+    <el-dialog
+        title="设置车辆类型"
+        v-model="data.setTypeVisible"
+        width="450px"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+      <div style="padding: 20px 30px;">
+        <div style="margin-bottom: 20px; color: #666; font-size: 14px;">
+          已选择 <span style="color: #409EFF; font-weight: 500;">{{ data.selectedVehicles.length }}</span> 辆车辆
+        </div>
+
+        <el-form label-width="100px">
+          <el-form-item label="车辆类型">
+            <el-radio-group v-model="data.selectedType" style="width: 100%;">
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <el-radio :label="1" size="large">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <el-tag type="primary" size="small">内部车</el-tag>
+                    <span style="color: #666; font-size: 13px;">内部员工车辆</span>
+                  </div>
+                </el-radio>
+                <el-radio :label="2" size="large">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <el-tag type="success" size="small">月租车</el-tag>
+                    <span style="color: #666; font-size: 13px;">已购买月租服务</span>
+                  </div>
+                </el-radio>
+                <el-radio :label="3" size="large">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <el-tag type="warning" size="small">临时车</el-tag>
+                    <span style="color: #666; font-size: 13px;">临时访客车辆</span>
+                  </div>
+                </el-radio>
+                <el-radio :label="4" size="large">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <el-tag type="danger" size="small">黑名单</el-tag>
+                    <span style="color: #666; font-size: 13px;">禁止通行车辆</span>
+                  </div>
+                </el-radio>
+              </div>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <div style="text-align: center; padding: 20px 0;">
+          <el-button @click="data.setTypeVisible = false" style="padding: 10px 30px;">取消</el-button>
+          <el-button
+              type="primary"
+              @click="confirmSetType"
+              :disabled="!data.selectedType"
+              style="padding: 10px 30px; margin-left: 15px;"
+          >确认设置</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+        title="绑定车辆"
+        v-model="data.bindDialogVisible"
+        width="30%"
+        :close-on-click-modal="false"
+        destroy-on-close
+    >
+
+      <el-form :model="data.bindForm" :rules="data.bindRules" ref="bindFormRef" label-width="80px">
+        <el-form-item label="车牌号" prop="name">
+          <el-input v-model="data.bindForm.name" placeholder="请输入车牌号 例如 粤X 12345" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="data.bindDialogVisible = false">取消</el-button>
+
+          <el-button type="primary" @click="doBindVehicle">绑定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -203,6 +293,23 @@ import { reactive, ref, onMounted } from 'vue'
 import request from '@/utils/request.js'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Edit } from '@element-plus/icons-vue'
+
+// 车牌校验正则：支持传统蓝牌、黄牌和新能源车牌
+// 传统蓝黄牌：省份简称 + 大写字母 + 5 位字母或数字
+// 新能源车牌：省份简称 + 大写字母 + D/F + 5 位字母或数字
+const platePattern = /^[\u4e00-\u9fa5][A-Z]\s(?:[A-Z0-9]{5}|[DF][A-HJ-NP-Z0-9]{5})$/;
+
+function validatePlate(rule, value, callback) {
+  if (!value) {
+    return callback(new Error('请输入车牌号'));
+  }
+  if (!platePattern.test(value)) {
+    return callback(new Error('请输入正确的车牌号,确保省份与号码之间有一个空格'));
+  }
+  callback();
+}
+
+const bindFormRef = ref() // 确保有这个ref
 
 const data = reactive({
   user: JSON.parse(localStorage.getItem('loginUser') || '{}'),
@@ -215,10 +322,23 @@ const data = reactive({
   ids: [],
   name: null,
   userList: [],
+  bindDialogVisible: false,
+  bindForm: {
+    name: ''
+  },
   rules: {
     name: [{ required: true, message: '请输入车牌号', trigger: 'blur' }],
     userId: [{ required: true, message: '请选择用户', trigger: 'blur' }]
-  }
+  },
+  bindRules: {
+    name: [
+      { validator: validatePlate, trigger: 'blur' }
+    ]
+  },
+  // 设置车辆类型相关
+  setTypeVisible: false,
+  selectedType: null,
+  selectedVehicles: []
 })
 
 const formRef = ref()
@@ -334,11 +454,11 @@ const update = () => {
 
 // 删除
 const del = id => {
-  ElMessageBox.confirm('删除后数据无法恢复，是否继续？', '提示', { type: 'warning' })
+  ElMessageBox.confirm('解绑后数据无法恢复，是否继续？', '提示', { type: 'warning' })
       .then(() => {
         request.delete(`/vehicle/delete/${id}`).then(res => {
           if (res.code === 200) {
-            ElMessage.success('删除成功')
+            ElMessage.success('解绑成功')
             load()
           } else ElMessage.error(res.msg)
         })
@@ -348,21 +468,91 @@ const del = id => {
 // 批量删除
 const handleSelectionChange = rows => {
   data.ids = rows.map(v => v.id)
+  data.selectedVehicles = rows // 保存选中的车辆信息，用于设置类型功能
 }
+
 const delBatch = () => {
   if (!data.ids.length) {
-    ElMessage.warning('请选择要删除的数据')
+    ElMessage.warning('请选择要解绑的车辆')
     return
   }
-  ElMessageBox.confirm('删除后数据无法恢复，是否继续？', '提示', { type: 'warning' })
+  ElMessageBox.confirm('解绑后数据无法恢复，是否继续？', '提示', { type: 'warning' })
       .then(() => {
         request.delete('/vehicle/delete/batch', { data: data.ids }).then(res => {
           if (res.code === 200) {
-            ElMessage.success('批量删除成功')
+            ElMessage.success('解绑成功')
             load()
           } else ElMessage.error(res.msg)
         })
       })
+}
+
+// 打开设置车辆类型弹窗
+const handleSetType = () => {
+  if (!data.ids.length) {
+    ElMessage.warning('请选择要设置类型的车辆')
+    return
+  }
+  data.selectedType = null
+  data.setTypeVisible = true
+}
+
+// 确认设置车辆类型
+const confirmSetType = () => {
+  if (!data.selectedType) {
+    ElMessage.warning('请选择车辆类型')
+    return
+  }
+
+  const typeNames = {
+    1: '内部车',
+    2: '月租车',
+    3: '临时车',
+    4: '黑名单'
+  }
+
+  ElMessageBox.confirm(
+      `确认将选中的 ${data.selectedVehicles.length} 辆车辆设置为【${typeNames[data.selectedType]}】？`,
+      '确认设置',
+      { type: 'info' }
+  ).then(() => {
+    request.post(`/vehicle/setType/${data.selectedType}`, data.ids).then(res => {
+      if (res.code === 200) {
+        ElMessage.success('设置成功')
+        data.setTypeVisible = false
+        load() // 重新加载数据
+      } else {
+        ElMessage.error(res.msg)
+      }
+    }).catch(() => {
+      ElMessage.error('设置失败，请重试')
+    })
+  })
+}
+
+const openBindDialog = () => {
+  data.bindForm = { name: '' }
+  data.bindDialogVisible = true
+}
+
+
+const doBindVehicle = () => {
+  bindFormRef.value.validate(valid => {
+    if (!valid) return
+
+    request.post('/vehicle/add', {
+      name: data.bindForm.name,
+      userId: data.user.id
+    }).then(res => {
+      if (res.code === 200) {
+        ElMessage.success("绑定成功")
+        data.bindDialogVisible = false
+        load()
+      } else {
+        ElMessage.error(res.msg || "绑定失败")
+      }
+    })
+  })
 }
 
 // 保存（新增或更新）
@@ -380,13 +570,23 @@ const reset = () => {
   load()
 }
 
+import {useUserStore} from "@/stores/user.js";
+const userStore = useUserStore()
+
+//购买月卡后需要更新userStore
+const updateInfo = () => {
+  request.get('/user/getInfo').then(res => {
+    userStore.setUser(res.data)
+  })
+}
 // 购买月卡
 const purchaseMonthly = row => {
   if (row.type === 2) return
   ElMessageBox.confirm(`确认为车辆【${row.name}】购买月卡？`, '提示', { type: 'info' })
       .then(() => {
-        request.post('/vehicle/purchaseMonthly', { vehicleId: row.id }).then(res => {
+        request.post(`/vehicle/recharge/${row.id}`).then(res => {
           if (res.code === 200) {
+            updateInfo()
             ElMessage.success('购买成功')
             load()
           } else ElMessage.error(res.msg)
