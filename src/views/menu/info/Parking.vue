@@ -27,9 +27,16 @@
         <el-table-column prop="startTime" label="入场时间"></el-table-column>
         <el-table-column prop="endTime" label="出场时间"></el-table-column>
         <el-table-column prop="status" label="状态"></el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+
+        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.roleList.includes('ADMIN')">
           <template v-slot="scope">
             <el-button type="primary" @click="handleEdit(scope.row)" :disabled="scope.row.status === '已出场'">车辆出场</el-button>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="100" fixed="right" v-if="data.user.roleList.includes('USER')">
+          <template v-slot="scope">
+            <el-button type="primary" @click="handleEditUser(scope.row)" :disabled="scope.row.status === '已出场'">我要出场</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -64,9 +71,11 @@
         <el-form-item label="入场时间" prop="startTime" v-if="data.flag">
           <el-date-picker placeholder="请选择日期时间" type="datetime" format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" v-model="data.form.startTime" style="width: 100%"></el-date-picker>
         </el-form-item>
+
         <el-form-item label="出场时间" prop="endTime" v-if="!data.flag">
           <el-date-picker placeholder="请选择日期时间" type="datetime" format="YYYY-MM-DD HH:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" v-model="data.form.endTime" style="width: 100%"></el-date-picker>
         </el-form-item>
+
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -249,6 +258,25 @@ const handleEdit = (row) => {
   data.form = JSON.parse(JSON.stringify(row))
   data.flag = false
   data.formVisible = true
+}
+
+const handleEditUser = (row) => {
+  data.form = JSON.parse(JSON.stringify(row))
+  data.flag = false
+  data.form.endTime = getNowTime()  // 设置当前时间
+  //data.formVisible = true
+  update()
+}
+
+const getNowTime = () => {
+  const now = new Date();
+  const Y = now.getFullYear();
+  const M = String(now.getMonth() + 1).padStart(2, '0');
+  const D = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  return `${Y}-${M}-${D} ${h}:${m}:${s}`;
 }
 
 
